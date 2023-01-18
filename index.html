@@ -57,7 +57,7 @@
                     const textY = squareY + textMarginTop;
 
                     const ik = i;
-                    const jk = reversed ? 0 : columns - j - 1;
+                    const jk = reversed ? columns - j - 1 : j;
 
                     pdf.text(prefix + texts[ik][jk], textX, textY, {
                         maxWidth: squareWidth - textMarginRight,
