@@ -26,7 +26,7 @@
             return pdf;
         }
 
-        const addTextGrid = (pdf, texts, prefix, reversed) => {
+        const addTextGrid = (pdf, texts, prefix, reversed, startCounter) => {
             pdf.addPage({
                 format: "a4",
                 orientation: "landscape",
@@ -47,25 +47,43 @@
             const textMarginRight = parseInt(document.getElementById('margin_right').value);
 
             for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < columns; j++) {
-                    const squareX = j * squareWidth;
-                    const squareY = i * squareHeight;
 
-                    pdf.rect(squareX, squareY, squareWidth, squareHeight, 'S');
+                if (reversed) {
+                    for (let j = columns - 1; j >= 0; j--) {
+                        const squareX = j * squareWidth;
+                        const squareY = i * squareHeight;
 
-                    const textX = squareX + textMarginLeft;
-                    const textY = squareY + textMarginTop;
+                        pdf.rect(squareX, squareY, squareWidth, squareHeight, 'S');
 
-                    const ik = i;
-                    const jk = reversed ? columns - j - 1 : j;
+                        const textX = squareX + textMarginLeft;
+                        const textY = squareY + textMarginTop;
 
-                    pdf.text(prefix + texts[ik][jk], textX, textY, {
-                        maxWidth: squareWidth - textMarginRight,
-                    });
+                        pdf.text(prefix.replace("NUMBER", startCounter) + texts[i][columns - j - 1], textX, textY, {
+                            maxWidth: squareWidth - textMarginRight,
+                        });
+
+                        startCounter++;
+                    }
+                } else {
+                    for (let j = 0; j < columns; j++) {
+                        const squareX = j * squareWidth;
+                        const squareY = i * squareHeight;
+
+                        pdf.rect(squareX, squareY, squareWidth, squareHeight, 'S');
+
+                        const textX = squareX + textMarginLeft;
+                        const textY = squareY + textMarginTop;
+
+                        pdf.text(prefix.replace("NUMBER", startCounter) + texts[i][j], textX, textY, {
+                            maxWidth: squareWidth - textMarginRight,
+                        });
+
+                        startCounter++;
+                    }
                 }
             }
 
-            return pdf;
+            return startCounter;
         };
 
         const readFlashcardsFile = async () => {
@@ -79,14 +97,14 @@
             const tables = [];
 
             let k = 0;
-            while (k < rows * columns) {
+            while (k < lines.length) {
                 const table = [];
 
                 for (let i = 0; i < rows; i++) {
                     const row = [];
 
                     for (let j = 0; j < columns; j++) {
-                        row.push(lines[k++]);
+                        row.push(lines[k++] ?? "EMPTY");
                     }
 
                     table.push(row);
@@ -112,9 +130,11 @@
             const textFontSize = parseInt(document.getElementById("font_size").value);
             const pdf = createPdf(textFontSize);
 
+            let counter = 1;
             for (let i = 0; i < questionTables.length; i++) {
-                addTextGrid(pdf, questionTables[i], "Question: ");
-                addTextGrid(pdf, answerTables[i], "Answer: ", true);
+                const newCounter = addTextGrid(pdf, questionTables[i], "Question NUMBER: ", false, counter);
+                addTextGrid(pdf, answerTables[i], "Answer NUMBER: ", true, counter);
+                counter = newCounter;
             }
 
             pdf.save('flashcards.pdf');
