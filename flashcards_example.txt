@@ -1,0 +1,21 @@
+# Cat de inalt este muntele Everest?
+# Muntele Everest are X kilometri inaltime.
+
+# Care sunt vecinii Romaniei?
+# Vecinii Romaniei sunt:
+    - Bulgaria
+    - Moldova
+    - Ucraina
+    - ...
+
+# Cate degete am la picioare?
+Dar la maini?
+# Am 15 degete, intrebare capcana.
+
+# Cate spatii poti sa lasi intre intrebare si raspuns sau intre intrebari?
+
+
+
+
+
+# Oricat spatiu vrei, dupa cum vezi.

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>FlashcardPdf</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+
+<body>
+
+    <script>
+        const jsPDF = jspdf.jsPDF;
+
+        const createPdf = (textFontSize) => {
+            const pdf = new jsPDF({
+                unit: "mm",
+                format: "a4",
+                orientation: "landscape",
+            });
+            pdf.setFontSize(textFontSize)
+            pdf.setFont(undefined, 'bold');;
+            pdf.deletePage(1);
+            return pdf;
+        }
+
+        const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc venenatis sem sit amet libero eleifend scelerisque. Aliquam at porta tellus, quis efficitur nunc. Mauris eget augue a lacus consectetur pellentesque eget quis ex. Nam eu risus consectetur, volutpat ante et, imperdiet nunc.";
+
+        const addTextGrid = (pdf, texts, prefix) => {
+            pdf.addPage({
+                format: "a4",
+                orientation: "landscape",
+            });
+
+            const A4Width = 297;
+            const A4Height = 210;
+
+            const rows = texts.length;
+            const columns = texts[0].length;
+
+            const squareWidth = A4Width / columns;
+            const squareHeight = A4Height / rows;
+
+            const textMarginTop = 30;
+            const textMarginLeft = 10;
+            const textMarginRight = 15;
+
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < columns; j++) {
+                    const squareX = j * squareWidth;
+                    const squareY = i * squareHeight;
+
+                    pdf.rect(squareX, squareY, squareWidth, squareHeight, 'S');
+
+                    const textX = squareX + textMarginLeft;
+                    const textY = squareY + textMarginTop;
+
+                    pdf.text(prefix + texts[i][j], textX, textY, {
+                        maxWidth: squareWidth - textMarginRight,
+                    });
+                }
+            }
+
+            return pdf;
+        };
+
+        const readFlashcardsFile = async () => {
+            const file = document.getElementById('flashcards_file').files[0];
+            const content = await file.text();
+            const lines = content.split('#').map(line => line.trim()).filter(line => line != "");
+            return lines;
+        }
+
+        const resizeToTables = (lines, rows, columns) => {
+            const tables = [];
+
+            let k = 0;
+            while (k < lines.length) {
+                const table = [];
+
+                for (let i = 0; i < rows; i++) {
+                    const row = [];
+
+                    for (let j = 0; j < columns; j++) {
+                        row.push(lines[k++]);
+                    }
+
+                    table.push(row);
+                }
+
+                tables.push(table);
+            }
+
+            return tables;
+        }
+
+        const downloadPdf = async () => {
+            const lines = await readFlashcardsFile();
+            const pageRows = document.getElementById("page_rows").value;
+            const pageColumns = document.getElementById("page_columns").value;
+
+            const questions = lines.filter((_, i) => i % 2 == 0);
+            const answers = lines.filter((_, i) => i % 2 == 1);
+
+            const questionTables = resizeToTables(questions, pageRows, pageColumns);
+            const answerTables = resizeToTables(answers, pageRows, pageColumns);
+
+            const textFontSize = document.getElementById("font_size").value;
+            const pdf = createPdf(textFontSize);
+
+            for (let i = 0; i < questionTables.length; i++) {
+                addTextGrid(pdf, questionTables[i], "Question: ");
+                addTextGrid(pdf, answerTables[i], "Answer: ");
+            }
+
+            pdf.save('flashcards.pdf');
+        };
+    </script>
+
+    <label for="flashcards_file">File with questions and answers:</label>
+    <input id="flashcards_file" type="file" /> <br /> <br /> <br />
+
+    <label for="page_rows">Number of rows per page:</label>
+    <input id="page_rows" type="number" value="2"> <br /> <br />
+
+    <label for="page_columns">Number of columns per page:</label>
+    <input id="page_columns" type="number" value="3"> <br /> <br /> <br />
+
+    <label for="font_size">Text font size:</label>
+    <input id="font_size" type="number" value="14"> <br /> <br /> <br />
+
+    <button onclick="downloadPdf()">Create flashcards PDF</button>
+</body>
+
+</html>
