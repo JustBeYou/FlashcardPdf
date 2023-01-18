@@ -26,7 +26,7 @@
             return pdf;
         }
 
-        const addTextGrid = (pdf, texts, prefix) => {
+        const addTextGrid = (pdf, texts, prefix, reversed) => {
             pdf.addPage({
                 format: "a4",
                 orientation: "landscape",
@@ -42,9 +42,9 @@
             const squareHeight = A4Height / rows;
 
 
-            const textMarginTop = document.getElementById('margin_top').value;
-            const textMarginLeft = document.getElementById('margin_left').value;
-            const textMarginRight = document.getElementById('margin_right').value;
+            const textMarginTop = parseInt(document.getElementById('margin_top').value);
+            const textMarginLeft = parseInt(document.getElementById('margin_left').value);
+            const textMarginRight = parseInt(document.getElementById('margin_right').value);
 
             for (let i = 0; i < rows; i++) {
                 for (let j = 0; j < columns; j++) {
@@ -56,7 +56,10 @@
                     const textX = squareX + textMarginLeft;
                     const textY = squareY + textMarginTop;
 
-                    pdf.text(prefix + texts[i][j], textX, textY, {
+                    const ik = i;
+                    const jk = reversed ? 0 : columns - j - 1;
+
+                    pdf.text(prefix + texts[ik][jk], textX, textY, {
                         maxWidth: squareWidth - textMarginRight,
                     });
                 }
@@ -76,7 +79,7 @@
             const tables = [];
 
             let k = 0;
-            while (k < lines.length) {
+            while (k < rows * columns) {
                 const table = [];
 
                 for (let i = 0; i < rows; i++) {
@@ -97,8 +100,8 @@
 
         const downloadPdf = async () => {
             const lines = await readFlashcardsFile();
-            const pageRows = document.getElementById("page_rows").value;
-            const pageColumns = document.getElementById("page_columns").value;
+            const pageRows = parseInt(document.getElementById("page_rows").value);
+            const pageColumns = parseInt(document.getElementById("page_columns").value);
 
             const questions = lines.filter((_, i) => i % 2 == 0);
             const answers = lines.filter((_, i) => i % 2 == 1);
@@ -106,12 +109,12 @@
             const questionTables = resizeToTables(questions, pageRows, pageColumns);
             const answerTables = resizeToTables(answers, pageRows, pageColumns);
 
-            const textFontSize = document.getElementById("font_size").value;
+            const textFontSize = parseInt(document.getElementById("font_size").value);
             const pdf = createPdf(textFontSize);
 
             for (let i = 0; i < questionTables.length; i++) {
                 addTextGrid(pdf, questionTables[i], "Question: ");
-                addTextGrid(pdf, answerTables[i], "Answer: ");
+                addTextGrid(pdf, answerTables[i], "Answer: ", true);
             }
 
             pdf.save('flashcards.pdf');
@@ -128,16 +131,16 @@
     <input id="page_columns" type="number" value="3"> <br /> <br /> <br />
 
     <label for="font_size">Text font size:</label>
-    <input id="font_size" type="number" value="14"> <br /> <br />
+    <input id="font_size" type="number" value="12"> <br /> <br />
 
     <label for="margin_left">Text margin left (mm):</label>
-    <input id="margin_left" type="number" value="30"> <br /> <br />
+    <input id="margin_left" type="number" value="3"> <br /> <br />
 
     <label for="margin_right">Text margin right (mm):</label>
-    <input id="margin_right" type="number" value="10"> <br /> <br />
+    <input id="margin_right" type="number" value="5"> <br /> <br />
 
     <label for="margin_top">Text margin top (mm):</label>
-    <input id="margin_top" type="number" value="15"> <br /> <br /> <br />
+    <input id="margin_top" type="number" value="8"> <br /> <br /> <br />
 
     <button onclick="downloadPdf()">Create flashcards PDF</button>
 </body>
