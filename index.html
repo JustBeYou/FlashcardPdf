@@ -12,19 +12,35 @@
 
     <script>
         const jsPDF = jspdf.jsPDF;
+        const PT_TO_MM = 0.3527777778;
 
         const combining = /[\u0300-\u036F]/g;
         const cleanUtf = (str) => {
             return str.normalize('NFKD').replace(combining, '');
         }
 
-        const createPdf = (textFontSize) => {
+        const getLineHeightMM = (pdf) => {
+            return pdf.internal.getLineHeight() * PT_TO_MM;
+        }
+
+        const fontSizeBasedOnHeight = (pdf, text, width, maxHeight) => {
+            for (let fontSize = 18; fontSize > 8; fontSize--) {
+                pdf.setFontSize(fontSize);
+                const lh = getLineHeightMM(pdf);
+                const lcount = pdf.splitTextToSize(text, width).length
+                const height = lh * lcount;
+                if (height < maxHeight) {
+                    break;
+                }
+            }
+        }
+
+        const createPdf = () => {
             const pdf = new jsPDF({
                 unit: "mm",
                 format: "a4",
                 orientation: "landscape",
             });
-            pdf.setFontSize(textFontSize)
             pdf.setFont('times', 'bold');;
             pdf.deletePage(1);
             return pdf;
@@ -62,8 +78,12 @@
                         const textX = squareX + textMarginLeft;
                         const textY = squareY + textMarginTop;
 
+                        const maxWidth = squareWidth - textMarginRight - textMarginLeft;
+                        const maxHeight = squareHeight - textMarginTop;
+                        fontSizeBasedOnHeight(pdf, texts[i][columns - j - 1], maxWidth, maxHeight);
+
                         pdf.text(prefix.replace("NUMBER", startCounter) + texts[i][columns - j - 1], textX, textY, {
-                            maxWidth: squareWidth - textMarginRight,
+                            maxWidth,
                         });
 
                         startCounter++;
@@ -78,8 +98,13 @@
                         const textX = squareX + textMarginLeft;
                         const textY = squareY + textMarginTop;
 
+
+                        const maxWidth = squareWidth - textMarginRight - textMarginLeft;
+                        const maxHeight = squareHeight - textMarginTop;
+                        fontSizeBasedOnHeight(pdf, texts[i][j], maxWidth, maxHeight);
+
                         pdf.text(prefix.replace("NUMBER", startCounter) + texts[i][j], textX, textY, {
-                            maxWidth: squareWidth - textMarginRight,
+                            maxWidth,
                         });
 
                         startCounter++;
@@ -131,13 +156,12 @@
             const questionTables = resizeToTables(questions, pageRows, pageColumns);
             const answerTables = resizeToTables(answers, pageRows, pageColumns);
 
-            const textFontSize = parseInt(document.getElementById("font_size").value);
-            const pdf = createPdf(textFontSize);
+            const pdf = createPdf();
 
             let counter = 1;
             for (let i = 0; i < questionTables.length; i++) {
-                const newCounter = addTextGrid(pdf, questionTables[i], "Question NUMBER: ", false, counter);
-                addTextGrid(pdf, answerTables[i], "Answer NUMBER: ", true, counter);
+                const newCounter = addTextGrid(pdf, questionTables[i], "Q NUMBER. ", false, counter);
+                addTextGrid(pdf, answerTables[i], "A NUMBER. ", true, counter);
                 counter = newCounter;
             }
 
@@ -153,9 +177,6 @@
 
     <label for="page_columns">Number of columns per page:</label>
     <input id="page_columns" type="number" value="3"> <br /> <br /> <br />
-
-    <label for="font_size">Text font size:</label>
-    <input id="font_size" type="number" value="12"> <br /> <br />
 
     <label for="margin_left">Text margin left (mm):</label>
     <input id="margin_left" type="number" value="3"> <br /> <br />
