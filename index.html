@@ -8,11 +8,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
-
 <body>
 
     <script>
         const jsPDF = jspdf.jsPDF;
+
+        const combining = /[\u0300-\u036F]/g;
+        const cleanUtf = (str) => {
+            return str.normalize('NFKD').replace(combining, '');
+        }
 
         const createPdf = (textFontSize) => {
             const pdf = new jsPDF({
@@ -21,7 +25,7 @@
                 orientation: "landscape",
             });
             pdf.setFontSize(textFontSize)
-            pdf.setFont(undefined, 'bold');;
+            pdf.setFont('times', 'bold');;
             pdf.deletePage(1);
             return pdf;
         }
@@ -88,7 +92,7 @@
 
         const readFlashcardsFile = async () => {
             const file = document.getElementById('flashcards_file').files[0];
-            const content = await file.text();
+            const content = cleanUtf(await file.text());
             const lines = content.split('#').map(line => line.trim()).filter(line => line != "");
             return lines;
         }
